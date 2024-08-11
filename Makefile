@@ -5,7 +5,7 @@ LIBDEFLATE_INSTALL_PATH=/home/user_home/ylf/someGit/rbam-1.20/libdeflate-1.20-in
 
 # Compiler and flags
 CXX=g++
-CXXFLAGS=-O3 -g -std=c++11
+CXXFLAGS=-O3 -g -std=c++11 -fopenmp
 
 # Include directories
 INCLUDES = -I$(HTSLIB_INSTALL_PATH)/include \
@@ -20,15 +20,19 @@ LIBS = -L$(HTSLIB_INSTALL_PATH)/lib \
        -L$(LIBDEFLATE_INSTALL_PATH)/lib64
 
 # Libraries to link
-LDFLAGS = $(LIBS) -lhts -lz -lpthread -lrabbitbamtools -lrabbitbamread -lrabbitbamwrite -lstdc++
+LDFLAGS = $(LIBS) -lhts -lz -fopenmp -lpthread -lrabbitbamtools -lrabbitbamread -lrabbitbamwrite -lstdc++
 
 # Final flags
 CXXFLAGS += $(INCLUDES)
 
-# Example target
-all:bam_qc 
+# Automatically find all .cpp files
+SRCS = $(wildcard *.cpp)
+OBJS = $(SRCS:.cpp=.o)
 
-sort: bam_qc.o
+# Example target
+all: bam_qc
+
+bam_qc: $(OBJS)
 	$(CXX) $^ $(LDFLAGS) -o $@
 
 %.o: %.cpp

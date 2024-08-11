@@ -6,9 +6,12 @@
 #include "BamTools.h"
 #include "BamReader.h"
 #include "BamStatus.h"
+#include <omp.h>
 
 
-//#define use_read_parallel
+const int read_thread_num = 12;
+
+const int round_size = 256;
 
 int main(int argc, char* argv[]) {
 	std::string input_file;
@@ -56,62 +59,69 @@ int main(int argc, char* argv[]) {
     }
 
 
-#ifdef use_read_parallel
-    int my_thread;
-    if(n_thread > 8) my_thread = 8;
-    else my_thread = n_thread;
-    printf("init rbam reader\n");
-    BamReader *reader = new BamReader(input_file, n_thread, false);
-    const int RN = 40 << 10;
-    std::vector<bam1_t*> b_vec[THREAD_NUM_P];
-    for(int i = 0; i < THREAD_NUM_P; i++) {
-        for(int j = 0; j < RN; j++) {
-            bam1_t *item = bam_init1();
-            b_vec[i].push_back(item);
-        }
-    }
-#else
-    BamReader *reader = new BamReader(input_file, n_thread, false);
-#endif
-
-    //BamStatus *status = new BamStatus(input_file);
-
-    bam1_t *b;
-    if ((b = bam_init1()) == NULL) {
-        fprintf(stderr, "[E::%s] Out of memory allocating BAM struct.\n", __func__);
-    }
 
     double t0 = GetTime();
+    n_thread -= read_thread_num;
+    if(n_thread <= 0) n_thread = 1;
 
-    long long num = 0;
-#ifdef use_read_parallel
-    while(true) {
-        auto res_vec = reader->getBam1_t_parallel(b_vec);
-        int res_vec_size = res_vec.size();
-        if (res_vec_size == 0) break;
-        for(int i = 0; i < res_vec_size; i++) {
-            num++;
+    std::cout << "Thread number: " << n_thread << "\n";
+
+    
+    BamReader *reader = new BamReader(input_file, n_thread > read_thread_num ? read_thread_num : n_thread, false);
+
+
+    bam1_t *b[n_thread];
+    BamStatus *status[n_thread];
+
+    for(int i = 0; i < n_thread; i++) {
+        if ((b[i] = bam_init1()) == NULL) {
+            fprintf(stderr, "[E::%s] Out of memory allocating BAM struct.\n", __func__);
+        }
+        status[i] = new BamStatus;
+    }
+
+    long long nums[n_thread] = {0};
+    bam_complete_block *BGZFBlock;
+    bam_complete_block* b_vec[round_size];
+    bool done = false;
+    while(!done) {
+        int not_null_size = round_size;
+        for(int i = 0; i < round_size; i++) {
+            BGZFBlock = reader->getBamCompleteClock();
+            if(BGZFBlock == nullptr) {
+                done = true;
+                not_null_size = i;
+                break;
+            }
+            b_vec[i] = BGZFBlock;
+        }
+#pragma omp parallel for num_threads(n_thread)
+        for(int i = 0; i < not_null_size; i++) {
+            int tid = omp_get_thread_num();
+            int ret = 0;
+            nums[tid] += b_vec[i]->data_size;
+            while((ret = (read_bam(b_vec[i], b[tid], 0))) >= 0) {
+                nums[tid]++;
+                status[tid]->statusbam(b[tid]);
+            }
+        }
+        
+        for(int i = 0; i < not_null_size; i++) {
+            reader->backBamCompleteBlock(b_vec[i]);
         }
     }
-#else
-    bam_complete_block *BGZFBlock = new bam_complete_block;
-    //while (reader->getBam1_t(b)) {
-    //    num++;
-    //    //status->statusbam(b);
-    //}
-    while((BGZFBlock = reader->getBamCompleteClock()) != nullptr) {
-        int ret = 0;
-        while((ret = (read_bam(BGZFBlock, b, 0))) >= 0) {
-            num++;
-        }
-        reader->backBamCompleteBlock(BGZFBlock);
+
+    long long num = nums[0];
+    for(int i = 1; i < n_thread; i++) {
+        status[0]->add(status[i]);
+        num += nums[i];
     }
-#endif
 
     printf("num %lld\n", num);
     printf("time %lf\n", GetTime() - t0);
-    //status->statusAll();
-    //status->reportHTML(&fout);
+    status[0]->statusAll();
+    status[0]->reportHTML(&fout);
+    //status->print();
     sam_close(sin);
 
     return 0;
