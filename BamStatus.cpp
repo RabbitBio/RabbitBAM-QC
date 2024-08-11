@@ -108,9 +108,9 @@ BamStatus::~BamStatus() {
 void BamStatus::statusbam(bam1_t *b) {
 
 #define rand_base 16
-    static int cntt = 0;
+    thread_local static int cntt = 0;
     cntt++;
-    int now_base = cntt % 16; 
+    int now_base = cntt % rand_base; 
     total_number++;
     max_len = max_len > b->core.l_qseq ? max_len : b->core.l_qseq;
     min_len = min_len == -1 ? b->core.l_qseq : min(min_len, b->core.l_qseq);
@@ -135,6 +135,7 @@ void BamStatus::statusbam(bam1_t *b) {
         int kmer = 0;
         int last_n = -1;
         for (int i = now_base; i < b->core.l_qseq; i += rand_base) {
+        //for (int i = 0; i < b->core.l_qseq >> 4; i++) {
             NumberList[b->core.l_qseq - i - 1][StatusBaseRever[bam_seqi(seq, i)] & 0x07]++;
             number[StatusBaseRever[bam_seqi(seq, i)] & 0x07]++;
             kmer <<= 2;
@@ -148,6 +149,7 @@ void BamStatus::statusbam(bam1_t *b) {
         }
         quality = bam_get_qual(b);
         for (int i = now_base; i < b->core.l_qseq; i += rand_base) {
+        //for (int i = 0; i < b->core.l_qseq >> 4; i++) {
             Qualitylist[b->core.l_qseq - i - 1][StatusBaseRever[bam_seqi(seq, i)] & 0x07] += quality[b->core.l_qseq - i - 1];
             QualityPositonList[b->core.l_qseq - i - 1][quality[b->core.l_qseq - i - 1]]++;
             total_qual += quality[b->core.l_qseq - i - 1];
@@ -156,6 +158,7 @@ void BamStatus::statusbam(bam1_t *b) {
         int kmer = 0;
         int last_n = -1;
         for (int i = now_base; i < b->core.l_qseq; i += rand_base) {
+        //for (int i = 0; i < b->core.l_qseq >> 4; i++) {
             NumberList[i][StatusBase[bam_seqi(seq, i)] & 0x07]++;
             number[StatusBaseRever[bam_seqi(seq, i)] & 0x07]++;
             kmer <<= 2;
@@ -169,6 +172,7 @@ void BamStatus::statusbam(bam1_t *b) {
         }
         quality = bam_get_qual(b);
         for (int i = now_base; i < b->core.l_qseq; i += rand_base) {
+        //for (int i = 0; i < b->core.l_qseq >> 4; i++) {
             Qualitylist[i][StatusBaseRever[bam_seqi(seq, i)] & 0x07] += quality[i];
             QualityPositonList[i][quality[i]]++;
             total_qual += quality[i];

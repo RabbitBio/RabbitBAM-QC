@@ -4,8 +4,8 @@ RABBITBAM_INSTALL_PATH=/home/user_home/ylf/RabbitBAM
 LIBDEFLATE_INSTALL_PATH=/home/user_home/ylf/someGit/rbam-1.20/libdeflate-1.20-install
 
 # Compiler and flags
-CXX=g++
-CXXFLAGS=-O3 -g -std=c++11 -fopenmp
+CXX=g++ 
+CXXFLAGS=-O3 -g -ffast-math -std=c++11 -fopenmp
 
 # Include directories
 INCLUDES = -I$(HTSLIB_INSTALL_PATH)/include \
