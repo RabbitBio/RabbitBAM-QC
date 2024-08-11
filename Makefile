@@ -1,7 +1,7 @@
 # Paths
 HTSLIB_INSTALL_PATH=/home/user_home/ylf/someGit/rbam-1.20/htslib-1.20-install
 RABBITBAM_INSTALL_PATH=/home/user_home/ylf/RabbitBAM
-LIBDEFLATE_INSTALL_PATH=/home/user_home/ylf/someGit/rbam-1.20/libdeflate-1.20-install
+LIBDEFLATE_INSTALL_PATH=/home/user_home/ylf/someGit/rbam-1.20/libdeflate-1.20
 
 # Compiler and flags
 CXX=g++ 
@@ -11,7 +11,8 @@ CXXFLAGS=-O3 -g -ffast-math -std=c++11 -fopenmp
 INCLUDES = -I$(HTSLIB_INSTALL_PATH)/include \
            -I$(RABBITBAM_INSTALL_PATH) \
            -I$(RABBITBAM_INSTALL_PATH)/htslib \
-           -I$(LIBDEFLATE_INSTALL_PATH)/include
+           -I$(LIBDEFLATE_INSTALL_PATH)/include \
+           -I$(LIBDEFLATE_INSTALL_PATH)
 
 # Library directories
 LIBS = -L$(HTSLIB_INSTALL_PATH)/lib \
