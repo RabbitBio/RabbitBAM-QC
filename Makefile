@@ -1,7 +1,7 @@
 # Paths
-HTSLIB_INSTALL_PATH=/home/user_home/ylf/someGit/rbam-1.20/htslib-1.20-install
-RABBITBAM_INSTALL_PATH=/home/user_home/ylf/RabbitBAM
-LIBDEFLATE_INSTALL_PATH=/home/user_home/ylf/someGit/rbam-1.20/libdeflate-1.20-install
+HTSLIB_INSTALL_PATH=
+RABBITBAM_INSTALL_PATH=
+LIBDEFLATE_INSTALL_PATH=
 
 # Compiler and flags
 CXX=g++
