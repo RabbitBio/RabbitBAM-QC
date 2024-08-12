@@ -1,10 +1,10 @@
 # Paths
-HTSLIB_INSTALL_PATH=
-RABBITBAM_INSTALL_PATH=
-LIBDEFLATE_INSTALL_PATH=
+HTSLIB_INSTALL_PATH=/home/user_home/ylf/someGit/rbam-1.20/htslib-1.20-install
+RABBITBAM_INSTALL_PATH=/home/user_home/ylf/RabbitBAM
+LIBDEFLATE_INSTALL_PATH=/home/user_home/ylf/someGit/rbam-1.20/libdeflate-1.20-install
 
 # Compiler and flags
-CXX=g++ 
+CXX=g++
 CXXFLAGS=-O3 -g -ffast-math -std=c++11 -fopenmp
 
 # Include directories
@@ -30,15 +30,26 @@ CXXFLAGS += $(INCLUDES)
 SRCS = $(wildcard *.cpp)
 OBJS = $(SRCS:.cpp=.o)
 
-# Example target
-all: bam_qc
+# Source files for bam_qc_single_thread
+SINGLE_THREAD_SRCS = bam_qc_single_thread.cpp
+SINGLE_THREAD_OBJS = $(SINGLE_THREAD_SRCS:.cpp=.o)
 
-bam_qc: $(OBJS)
+# Source files for bam_qc (excluding bam_qc_single_thread)
+BAM_QC_SRCS = $(filter-out bam_qc_single_thread.cpp, $(SRCS))
+BAM_QC_OBJS = $(BAM_QC_SRCS:.cpp=.o)
+
+# Example target
+all: bam_qc bam_qc_single_thread
+
+bam_qc: $(BAM_QC_OBJS)
+	$(CXX) $^ $(LDFLAGS) -o $@
+
+bam_qc_single_thread: $(filter-out bam_qc.o, $(OBJS))
 	$(CXX) $^ $(LDFLAGS) -o $@
 
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 clean:
-	rm -f *.o bam_qc
+	rm -f *.o bam_qc bam_qc_single_thread
 
